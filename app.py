@@ -9,7 +9,7 @@ st.set_page_config(page_title="Pumpkin Seed Classifier", page_icon="🎃", layou
 st.title("🎃 Hệ thống Dự đoán Hạt Bí ngô hàng loạt")
 st.info("Hệ thống sử dụng toàn bộ 12 đặc trưng hình thái để dự đoán.")
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip('/')
 API_URL_FILE = f"{BACKEND_URL}/predict_file"
 
 uploaded_file = st.file_uploader("Tải lên file dữ liệu (.csv, .xlsx)", type=["csv", "xlsx", "xls"])
@@ -46,4 +46,5 @@ if uploaded_file is not None:
     except Exception as e:
 
         st.error(f"Lỗi file: {e}")
+
 
