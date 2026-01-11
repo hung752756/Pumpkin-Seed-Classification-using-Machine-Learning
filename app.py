@@ -9,8 +9,22 @@ st.set_page_config(page_title="Pumpkin Seed Classifier", page_icon="🎃", layou
 st.title("🎃 Hệ thống Dự đoán Hạt Bí ngô hàng loạt")
 st.info("Hệ thống sử dụng toàn bộ 12 đặc trưng hình thái để dự đoán.")
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip('/')
+raw_url = os.getenv("BACKEND_URL", "http://localhost:8000").strip().rstrip('/')
+BACKEND_URL = raw_url
 API_URL_FILE = f"{BACKEND_URL}/predict_file"
+st.sidebar.title("Cấu hình hệ thống")
+st.sidebar.info(f"Đang kết nối Backend tại:\n{BACKEND_URL}")
+
+if st.sidebar.button("Kiểm tra kết nối Server"):
+    try:
+        response = requests.get(BACKEND_URL)
+        if response.status_code == 200:
+            st.sidebar.success("✅ Kết nối tới Backend thành công!")
+        else:
+            st.sidebar.error(f"❌ Backend trả về lỗi: {response.status_code}")
+    except Exception as e:
+        st.sidebar.error(f"❌ Không thể kết nối: {e}")
+        
 
 uploaded_file = st.file_uploader("Tải lên file dữ liệu (.csv, .xlsx)", type=["csv", "xlsx", "xls"])
 
@@ -46,5 +60,6 @@ if uploaded_file is not None:
     except Exception as e:
 
         st.error(f"Lỗi file: {e}")
+
 
 
