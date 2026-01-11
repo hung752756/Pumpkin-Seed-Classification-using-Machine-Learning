@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import pandas as pd
+import io
+import os
 
 st.set_page_config(page_title="Pumpkin Seed Classifier", page_icon="🎃", layout="wide")
 
@@ -44,3 +46,4 @@ if uploaded_file is not None:
     except Exception as e:
 
         st.error(f"Lỗi file: {e}")
+
