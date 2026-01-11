@@ -48,6 +48,9 @@ def preprocess_input(df: pd.DataFrame):
     scaled_data = scaler.transform(df)
     return scaled_data
 
+@app.get("/")
+async def root():
+    return {"status": "Server is running", "message": "Pumpkin Seed API is alive!"}
 @app.post("/predict")
 async def predict(data: SeedData):
     if model is None:
@@ -69,6 +72,9 @@ async def predict(data: SeedData):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/")
+async def root():
+    return {"status": "Server is running", "message": "Pumpkin Seed API is alive!"}
 @app.post("/predict_file")
 async def predict_file(file: UploadFile = File(...)):
     if model is None:
@@ -113,4 +119,5 @@ async def predict_file(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
