@@ -1,5 +1,4 @@
 # --- Core Machine Learning ---
-tensorflow==2.20.0
 scikit-learn==1.7.2
 scipy==1.15.3
 numpy==2.2.6
@@ -17,4 +16,5 @@ streamlit==1.52.2
 requests==2.32.5
 
 # --- Data handling (Xử lý file Excel) ---
+
 openpyxl==3.1.5
