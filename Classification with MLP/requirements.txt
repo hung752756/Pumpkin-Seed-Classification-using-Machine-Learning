@@ -7,10 +7,12 @@ joblib==1.5.3
 pandas==2.3.3
 numpy==2.2.6
 pydantic==2.12.5
+scikit-learn==1.7.2
 
 # --- Frontend ---
 streamlit==1.52.2
 requests==2.32.5
 
 # --- Xử lý File ---
+
 openpyxl==3.1.5
