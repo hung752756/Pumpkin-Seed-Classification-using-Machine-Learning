@@ -11,7 +11,6 @@ st.title("🎃 Hệ thống Phân loại Hạt Bí ngô")
 st.markdown("---")
 
 # --- CẤU HÌNH API ---
-# Lấy URL từ biến môi trường hoặc dùng mặc định localhost
 raw_url = os.getenv("BACKEND_URL", "http://localhost:8000").strip().rstrip('/')
 BACKEND_URL = raw_url
 API_URL_PREDICT = f"{BACKEND_URL}/predict"
@@ -35,129 +34,110 @@ if st.sidebar.button("Kiểm tra kết nối Server"):
 tab1, tab2 = st.tabs(["🧩 Dự đoán Đơn lẻ (Nhập tay)", "📂 Dự đoán Hàng loạt (Upload File)"])
 
 # ==========================================
-# TAB 1: DỰ ĐOÁN ĐƠN LẺ (Gửi tới /predict)
+# TAB 1: DỰ ĐOÁN ĐƠN LẺ (REAL-TIME VALIDATION)
 # ==========================================
 with tab1:
     st.header("Nhập thông số kỹ thuật của hạt")
-    st.write("Vui lòng nhập 12 đặc trưng hình thái để phân loại.")
-    def validate_data(data):
-        errors = []
-        
-        # Nhóm 1: Kích thước
-        if not (40000 < data['Area'] < 145000):
-            errors.append(f"⚠️ Area phải > 40,000 và < 145,000 (Bạn nhập: {data['Area']})")
-        if not (800 < data['Perimeter'] < 1600):
-            errors.append(f"⚠️ Perimeter phải > 800 và < 1,600 (Bạn nhập: {data['Perimeter']})")
-        if not (300 < data['Major_Axis_Length'] < 700):
-            errors.append(f"⚠️ Major Axis phải > 300 và < 700 (Bạn nhập: {data['Major_Axis_Length']})")
-        if not (140 < data['Minor_Axis_Length'] < 350):
-            errors.append(f"⚠️ Minor Axis phải > 140 và < 350 (Bạn nhập: {data['Minor_Axis_Length']})")
+    st.info("💡 Nút 'Phân loại' sẽ bị khóa cho đến khi tất cả thông số hợp lệ.")
 
-        # Nhóm 2: Diện tích & Đường kính
-        if not (40000 < data['Convex_Area'] < 145000):
-            errors.append(f"⚠️ Convex Area phải > 40,000 và < 145,000 (Bạn nhập: {data['Convex_Area']})")
-        if not (0 < data['Equiv_Diameter'] < 430):
-            errors.append(f"⚠️ Equiv Diameter phải > 0 và < 430 (Bạn nhập: {data['Equiv_Diameter']})")
+    # --- 1. NHẬP LIỆU (Bỏ st.form để cập nhật tức thì) ---
+    col1, col2, col3 = st.columns(3)
 
-        # Nhóm 3: Hình dạng (0 < x < 1) hoặc giới hạn khác
-        # Kiểm tra kỹ các giá trị sát 0 hoặc 1
-        if not (0 < data['Eccentricity'] < 1):
-            errors.append(f"⚠️ Eccentricity phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Eccentricity']})")
-        if not (0 < data['Solidity'] < 1):
-            errors.append(f"⚠️ Solidity phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Solidity']})")
-        if not (0 < data['Extent'] < 1):
-            errors.append(f"⚠️ Extent phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Extent']})")
-        if not (0 < data['Roundness'] < 1):
-            errors.append(f"⚠️ Roundness phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Roundness']})")
-        if not (0 < data['Compactness'] < 1):
-            errors.append(f"⚠️ Compactness phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Compactness']})")
-        
-        # Aspect Ratio giới hạn riêng
-        if not (0 < data['Aspect_Ration'] < 3.5):
-            errors.append(f"⚠️ Aspect Ration phải > 0 và < 3.5 (Bạn nhập: {data['Aspect_Ration']})")
-
-        return errors
+    # Để validate bằng code logic (disable button), ta nới rộng min/max của widget
+    # để người dùng có thể nhập sai, sau đó ta bắt lỗi và khóa nút.
     
-    # Tạo Form để gom nhóm input
-    with st.form("predict_form"):
-        col1, col2, col3 = st.columns(3)
+    with col1:
+        st.subheader("Kích thước cơ bản")
+        area = st.number_input("Area", value=80000.0, step=100.0, min_value=0.0)
+        perimeter = st.number_input("Perimeter", value=1200.0, step=10.0, min_value=0.0)
+        major_axis = st.number_input("Major_Axis_Length", value=500.0, step=10.0, min_value=0.0)
+        minor_axis = st.number_input("Minor_Axis_Length", value=250.0, step=10.0, min_value=0.0)
 
-        # Nhóm 1: Các chỉ số kích thước lớn
-        with col1:
-            st.subheader("Kích thước cơ bản")
-            # Các giá trị min/max/value dựa trên Pydantic constraints trong Backend
-            area = st.number_input("Area (Diện tích)", min_value=40001.0, max_value=144999.0, value=80000.0, step=100.0)
-            perimeter = st.number_input("Perimeter (Chu vi)", min_value=801.0, max_value=1599.0, value=1200.0)
-            major_axis = st.number_input("Major_Axis_Length (Trục lớn)", min_value=301.0, max_value=699.0, value=500.0)
-            minor_axis = st.number_input("Minor_Axis_Length (Trục nhỏ)", min_value=141.0, max_value=349.0, value=250.0)
+    with col2:
+        st.subheader("Diện tích & Đường kính")
+        convex_area = st.number_input("Convex_Area", value=81000.0, step=100.0, min_value=0.0)
+        equiv_diameter = st.number_input("Equiv_Diameter", value=300.0, step=10.0, min_value=0.0)
+        
+        # Các chỉ số bé
+        eccentricity = st.number_input("Eccentricity", value=0.8500, step=0.0001, format="%.4f")
+        solidity = st.number_input("Solidity (Độ đặc)", value=0.9850, step=0.0001, format="%.4f")
 
-        # Nhóm 2: Diện tích và Đường kính
-        with col2:
-            st.subheader("Diện tích & Đường kính")
-            convex_area = st.number_input("Convex_Area (Diện tích bao lồi)", min_value=40001.0, max_value=144999.0, value=81000.0, step=100.0)
-            equiv_diameter = st.number_input("Equiv_Diameter (ĐK tương đương)", min_value=0.1, max_value=429.0, value=300.0)
-            eccentricity = st.number_input("Eccentricity (Độ tâm sai)", min_value=0.01, max_value=0.9999, value=0.8, format="%.4f")
-            solidity = st.number_input("Solidity (Độ đặc)", min_value=0.01, max_value=0.9999, value=0.9, format="%.4f")
+    with col3:
+        st.subheader("Hệ số hình dạng")
+        extent = st.number_input("Extent", value=0.7000, step=0.0001, format="%.4f")
+        roundness = st.number_input("Roundness", value=0.8000, step=0.0001, format="%.4f")
+        aspect_ratio = st.number_input("Aspect_Ration", value=2.0000, step=0.0001, format="%.4f")
+        compactness = st.number_input("Compactness", value=0.7000, step=0.0001, format="%.4f")
 
-        # Nhóm 3: Các hệ số hình dạng (0-1 hoặc nhỏ)
-        with col3:
-            st.subheader("Hệ số hình dạng")
-            extent = st.number_input("Extent (Độ mở rộng)", min_value=0.01, max_value=0.9999, value=0.7, format="%.4f")
-            roundness = st.number_input("Roundness (Độ tròn)", min_value=0.01, max_value=0.9999, value=0.8, format="%.4f")
-            # Lưu ý: Backend bạn ghi là Aspect_Ration (thiếu chữ 'o' ở cuối nhưng khớp model pydantic)
-            aspect_ratio = st.number_input("Aspect_Ration (Tỷ lệ khung hình)", min_value=0.01, max_value=3.4999, value=2.0, format="%.4f")
-            compactness = st.number_input("Compactness (Độ nén)", min_value=0.01, max_value=0.9999, value=0.7, format="%.4f")
+    # --- 2. LOGIC KIỂM TRA (VALIDATION) ---
+    # Kiểm tra ngay lập tức các giá trị vừa nhập
+    errors = []
 
-        submitted = st.form_submit_button("🚀 Phân loại ngay")
+    # Nhóm 1
+    if not (40000 < area < 145000): errors.append(f"Area: {area} (Phải từ 40,000 - 145,000)")
+    if not (800 < perimeter < 1600): errors.append(f"Perimeter: {perimeter} (Phải từ 800 - 1,600)")
+    if not (300 < major_axis < 700): errors.append(f"Major Axis: {major_axis} (Phải từ 300 - 700)")
+    if not (140 < minor_axis < 350): errors.append(f"Minor Axis: {minor_axis} (Phải từ 140 - 350)")
 
-    if submitted:
-        # 1. Gom dữ liệu vào dictionary
+    # Nhóm 2
+    if not (40000 < convex_area < 145000): errors.append(f"Convex Area: {convex_area} (Phải từ 40,000 - 145,000)")
+    if not (0 < equiv_diameter < 430): errors.append(f"Equiv Diameter: {equiv_diameter} (Phải từ 0 - 430)")
+
+    # Nhóm 3 (0 < x < 1)
+    if not (0 < eccentricity < 1): errors.append(f"Eccentricity: {eccentricity} (Phải < 1)")
+    if not (0 < solidity < 1): errors.append(f"Solidity: {solidity} (Phải < 1)")
+    if not (0 < extent < 1): errors.append(f"Extent: {extent} (Phải < 1)")
+    if not (0 < roundness < 1): errors.append(f"Roundness: {roundness} (Phải < 1)")
+    if not (0 < compactness < 1): errors.append(f"Compactness: {compactness} (Phải < 1)")
+    
+    # Aspect Ratio
+    if not (0 < aspect_ratio < 3.5): errors.append(f"Aspect Ration: {aspect_ratio} (Phải < 3.5)")
+
+    # --- 3. HIỂN THỊ LỖI VÀ NÚT BẤM ---
+    
+    # Biến cờ kiểm tra hợp lệ
+    is_valid = len(errors) == 0
+
+    if not is_valid:
+        st.error("⛔ Phát hiện dữ liệu không hợp lệ:")
+        for err in errors:
+            st.warning(err)
+    else:
+        st.success("✅ Dữ liệu hợp lệ. Sẵn sàng phân loại!")
+
+    # Nút bấm: disabled=True nếu dữ liệu không hợp lệ (not is_valid)
+    btn_predict = st.button("🚀 Phân loại ngay", type="primary", disabled=not is_valid)
+
+    if btn_predict:
+        # Gom dữ liệu
         payload = {
-            "Area": area,
-            "Perimeter": perimeter,
-            "Major_Axis_Length": major_axis,
-            "Minor_Axis_Length": minor_axis,
-            "Convex_Area": convex_area,
-            "Equiv_Diameter": equiv_diameter,
-            "Eccentricity": eccentricity,
-            "Solidity": solidity,
-            "Extent": extent,
-            "Roundness": roundness,
-            "Aspect_Ration": aspect_ratio,
-            "Compactness": compactness
+            "Area": area, "Perimeter": perimeter, "Major_Axis_Length": major_axis,
+            "Minor_Axis_Length": minor_axis, "Convex_Area": convex_area,
+            "Equiv_Diameter": equiv_diameter, "Eccentricity": eccentricity,
+            "Solidity": solidity, "Extent": extent, "Roundness": roundness,
+            "Aspect_Ration": aspect_ratio, "Compactness": compactness
         }
 
-        # 2. KIỂM TRA DỮ LIỆU (VALIDATION)
-        validation_errors = validate_data(payload)
-
-        if len(validation_errors) > 0:
-            # Nếu có lỗi, hiển thị cảnh báo và KHÔNG gửi request
-            st.error("⛔ Phát hiện dữ liệu không hợp lệ (Out of Schema):")
-            for err in validation_errors:
-                st.warning(err)
-            st.info("Vui lòng điều chỉnh lại các thông số trên để tiếp tục.")
-        else:
-            # === CHỈ KHI KHÔNG CÓ LỖI (ELSE): MỚI GỬI REQUEST ===
-            with st.spinner("Dữ liệu hợp lệ. Đang kết nối server..."):
-                try:
-                    response = requests.post(API_URL_PREDICT, json=payload, timeout=10)
+        with st.spinner("Đang gửi tới AI..."):
+            try:
+                response = requests.post(API_URL_PREDICT, json=payload, timeout=10)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    st.success("✅ Phân loại thành công!")
                     
-                    if response.status_code == 200:
-                        result = response.json()
-                        st.success("✅ Phân loại thành công!")
-                        
-                        col_res1, col_res2 = st.columns(2)
-                        with col_res1:
-                            st.metric("Loại hạt", result.get("prediction", "Unknown"))
-                        with col_res2:
-                            st.metric("Độ tin cậy", result.get("confidence", "0%"))
-                    else:
-                        st.error(f"❌ Server trả về lỗi ({response.status_code}): {response.text}")
-                except Exception as e:
-                    st.error(f"❌ Lỗi kết nối: {e}")
+                    col_res1, col_res2 = st.columns(2)
+                    with col_res1:
+                        st.metric("Loại hạt", result.get("prediction", "Unknown"))
+                    with col_res2:
+                        st.metric("Độ tin cậy", result.get("confidence", "0%"))
+                else:
+                    st.error(f"❌ Server trả về lỗi ({response.status_code}): {response.text}")
+            except Exception as e:
+                st.error(f"❌ Lỗi kết nối: {e}")
 
 # ==========================================
-# TAB 2: DỰ ĐOÁN HÀNG LOẠT (Gửi tới /predict_file) - Code cũ của bạn
+# TAB 2: DỰ ĐOÁN HÀNG LOẠT (Giữ nguyên)
 # ==========================================
 with tab2:
     st.header("Tải lên file dữ liệu")
@@ -165,7 +145,6 @@ with tab2:
 
     if uploaded_file is not None:
         try:
-            # Đọc file để preview
             if uploaded_file.name.endswith('.csv'):
                 preview_df = pd.read_csv(uploaded_file)
             else:
@@ -175,7 +154,6 @@ with tab2:
             st.dataframe(preview_df.head(), use_container_width=True)
             
             if st.button("🚀 Xử lý toàn bộ file"):
-                # Reset con trỏ file về đầu để gửi request
                 uploaded_file.seek(0)
                 files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/octet-stream")}
                 
@@ -185,10 +163,8 @@ with tab2:
                         if response.status_code == 200:
                             results_df = pd.DataFrame(response.json())
                             st.success("✅ Xử lý hoàn tất!")
-                            
                             st.dataframe(results_df, use_container_width=True)
                             
-                            # Chuyển đổi để download
                             csv_data = results_df.to_csv(index=False).encode('utf-8')
                             st.download_button(
                                 label="📥 Tải về kết quả (CSV)", 
@@ -202,5 +178,3 @@ with tab2:
                         st.error(f"Không kết nối được server: {e}")
         except Exception as e:
             st.error(f"Lỗi đọc file: {e}")
-
-
