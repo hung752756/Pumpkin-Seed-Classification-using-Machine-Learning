@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import pandas as pd
 import numpy as np
 import joblib
@@ -26,18 +26,20 @@ else:
     print("CRITICAL ERROR: File 'pumpkin_model.keras' or 'scaler.joblib' not found!")
 
 class SeedData(BaseModel):
-    Area: float
-    Perimeter: float
-    Major_Axis_Length: float
-    Minor_Axis_Length: float
-    Convex_Area: float
-    Equiv_Diameter: float
-    Eccentricity: float
-    Solidity: float
-    Extent: float
-    Roundness: float
-    Aspect_Ration: float
-    Compactness: float
+    Area: float = Field(..., gt=40000, lt=145000 ,description="Diện tích hạt")
+    Perimeter: float = Field(..., gt=800, lt=1600 ,description="Chu vi")
+    Major_Axis_Length: float = Field(..., gt=300, lt=700 ,description="Trục lớn")
+    Minor_Axis_Length: float = Field(..., gt=140, lt=350 ,description="Trục nhỏ")
+    Convex_Area: float = Field(..., gt=40000, lt=145000 ,description="Diện tích bao lồi")
+    Equiv_Diameter: float = Field(..., gt=0, lt=430 ,description="Đường kính tương đương")
+
+    # Nhóm 2: Lớn hơn 0 và Bé hơn 1 (gt = greater than, lt = less than)
+    Eccentricity: float = Field(..., gt=0, lt=1, description="Độ tâm sai (0 < x < 1)")
+    Solidity: float = Field(..., gt=0, lt=1, description="Độ đặc (0 < x < 1)")
+    Extent: float = Field(..., gt=0, lt=1, description="Độ mở rộng (0 < x < 1)")
+    Roundness: float = Field(..., gt=0, lt=1, description="Độ tròn (0 < x < 1)")
+    Aspect_Ration: float = Field(..., gt=0, lt=3.5, description="Tỷ lệ khung hình (0 < x < 3.5)")
+    Compactness: float = Field(..., gt=0, lt=1, description="Độ nén (0 < x < 1)")
 
 def preprocess_input(df: pd.DataFrame):
     # Kiểm tra xem scaler đã được load chưa
@@ -119,4 +121,5 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
