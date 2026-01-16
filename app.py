@@ -130,31 +130,31 @@ with tab1:
         # 2. KIỂM TRA DỮ LIỆU (VALIDATION)
         validation_errors = validate_data(payload)
 
-        if validation_errors:
+        if len(validation_errors) > 0:
             # Nếu có lỗi, hiển thị cảnh báo và KHÔNG gửi request
             st.error("⛔ Phát hiện dữ liệu không hợp lệ (Out of Schema):")
             for err in validation_errors:
                 st.warning(err)
             st.info("Vui lòng điều chỉnh lại các thông số trên để tiếp tục.")
         else:
-            # 3. Nếu dữ liệu sạch, mới gửi Request
-            with st.spinner("Dữ liệu hợp lệ. Đang gửi tới AI..."):
+            # === CHỈ KHI KHÔNG CÓ LỖI (ELSE): MỚI GỬI REQUEST ===
+            with st.spinner("Dữ liệu hợp lệ. Đang kết nối server..."):
                 try:
                     response = requests.post(API_URL_PREDICT, json=payload, timeout=10)
                     
                     if response.status_code == 200:
                         result = response.json()
-                        st.success("✅ Dự đoán thành công!")
+                        st.success("✅ Phân loại thành công!")
                         
                         col_res1, col_res2 = st.columns(2)
                         with col_res1:
-                            st.metric(label="Loại hạt dự đoán", value=result.get("prediction", "Unknown"))
+                            st.metric("Loại hạt", result.get("prediction", "Unknown"))
                         with col_res2:
-                            st.metric(label="Độ tin cậy", value=result.get("confidence", "0%"))
+                            st.metric("Độ tin cậy", result.get("confidence", "0%"))
                     else:
-                        st.error(f"❌ Lỗi từ Server ({response.status_code}): {response.text}")
+                        st.error(f"❌ Server trả về lỗi ({response.status_code}): {response.text}")
                 except Exception as e:
-                    st.error(f"❌ Không kết nối được server: {e}")
+                    st.error(f"❌ Lỗi kết nối: {e}")
 
 # ==========================================
 # TAB 2: DỰ ĐOÁN HÀNG LOẠT (Gửi tới /predict_file) - Code cũ của bạn
@@ -202,4 +202,5 @@ with tab2:
                         st.error(f"Không kết nối được server: {e}")
         except Exception as e:
             st.error(f"Lỗi đọc file: {e}")
+
 
