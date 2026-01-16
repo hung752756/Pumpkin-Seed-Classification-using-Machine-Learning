@@ -40,7 +40,44 @@ tab1, tab2 = st.tabs(["🧩 Dự đoán Đơn lẻ (Nhập tay)", "📂 Dự đo
 with tab1:
     st.header("Nhập thông số kỹ thuật của hạt")
     st.write("Vui lòng nhập 12 đặc trưng hình thái để phân loại.")
+    def validate_data(data):
+        errors = []
+        
+        # Nhóm 1: Kích thước
+        if not (40000 < data['Area'] < 145000):
+            errors.append(f"⚠️ Area phải > 40,000 và < 145,000 (Bạn nhập: {data['Area']})")
+        if not (800 < data['Perimeter'] < 1600):
+            errors.append(f"⚠️ Perimeter phải > 800 và < 1,600 (Bạn nhập: {data['Perimeter']})")
+        if not (300 < data['Major_Axis_Length'] < 700):
+            errors.append(f"⚠️ Major Axis phải > 300 và < 700 (Bạn nhập: {data['Major_Axis_Length']})")
+        if not (140 < data['Minor_Axis_Length'] < 350):
+            errors.append(f"⚠️ Minor Axis phải > 140 và < 350 (Bạn nhập: {data['Minor_Axis_Length']})")
 
+        # Nhóm 2: Diện tích & Đường kính
+        if not (40000 < data['Convex_Area'] < 145000):
+            errors.append(f"⚠️ Convex Area phải > 40,000 và < 145,000 (Bạn nhập: {data['Convex_Area']})")
+        if not (0 < data['Equiv_Diameter'] < 430):
+            errors.append(f"⚠️ Equiv Diameter phải > 0 và < 430 (Bạn nhập: {data['Equiv_Diameter']})")
+
+        # Nhóm 3: Hình dạng (0 < x < 1) hoặc giới hạn khác
+        # Kiểm tra kỹ các giá trị sát 0 hoặc 1
+        if not (0 < data['Eccentricity'] < 1):
+            errors.append(f"⚠️ Eccentricity phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Eccentricity']})")
+        if not (0 < data['Solidity'] < 1):
+            errors.append(f"⚠️ Solidity phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Solidity']})")
+        if not (0 < data['Extent'] < 1):
+            errors.append(f"⚠️ Extent phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Extent']})")
+        if not (0 < data['Roundness'] < 1):
+            errors.append(f"⚠️ Roundness phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Roundness']})")
+        if not (0 < data['Compactness'] < 1):
+            errors.append(f"⚠️ Compactness phải nằm trong khoảng (0, 1) (Bạn nhập: {data['Compactness']})")
+        
+        # Aspect Ratio giới hạn riêng
+        if not (0 < data['Aspect_Ration'] < 3.5):
+            errors.append(f"⚠️ Aspect Ration phải > 0 và < 3.5 (Bạn nhập: {data['Aspect_Ration']})")
+
+        return errors
+    
     # Tạo Form để gom nhóm input
     with st.form("predict_form"):
         col1, col2, col3 = st.columns(3)
@@ -59,22 +96,22 @@ with tab1:
             st.subheader("Diện tích & Đường kính")
             convex_area = st.number_input("Convex_Area (Diện tích bao lồi)", min_value=40001.0, max_value=144999.0, value=81000.0, step=100.0)
             equiv_diameter = st.number_input("Equiv_Diameter (ĐK tương đương)", min_value=0.1, max_value=429.0, value=300.0)
-            eccentricity = st.number_input("Eccentricity (Độ tâm sai)", min_value=0.01, max_value=0.99, value=0.8, format="%.4f")
-            solidity = st.number_input("Solidity (Độ đặc)", min_value=0.01, max_value=0.99, value=0.9, format="%.4f")
+            eccentricity = st.number_input("Eccentricity (Độ tâm sai)", min_value=0.01, max_value=0.9999, value=0.8, format="%.4f")
+            solidity = st.number_input("Solidity (Độ đặc)", min_value=0.01, max_value=0.9999, value=0.9, format="%.4f")
 
         # Nhóm 3: Các hệ số hình dạng (0-1 hoặc nhỏ)
         with col3:
             st.subheader("Hệ số hình dạng")
-            extent = st.number_input("Extent (Độ mở rộng)", min_value=0.01, max_value=0.99, value=0.7, format="%.4f")
-            roundness = st.number_input("Roundness (Độ tròn)", min_value=0.01, max_value=0.99, value=0.8, format="%.4f")
+            extent = st.number_input("Extent (Độ mở rộng)", min_value=0.01, max_value=0.9999, value=0.7, format="%.4f")
+            roundness = st.number_input("Roundness (Độ tròn)", min_value=0.01, max_value=0.9999, value=0.8, format="%.4f")
             # Lưu ý: Backend bạn ghi là Aspect_Ration (thiếu chữ 'o' ở cuối nhưng khớp model pydantic)
-            aspect_ratio = st.number_input("Aspect_Ration (Tỷ lệ khung hình)", min_value=0.01, max_value=3.49, value=2.0, format="%.4f")
-            compactness = st.number_input("Compactness (Độ nén)", min_value=0.01, max_value=0.99, value=0.7, format="%.4f")
+            aspect_ratio = st.number_input("Aspect_Ration (Tỷ lệ khung hình)", min_value=0.01, max_value=3.4999, value=2.0, format="%.4f")
+            compactness = st.number_input("Compactness (Độ nén)", min_value=0.01, max_value=0.9999, value=0.7, format="%.4f")
 
         submitted = st.form_submit_button("🚀 Phân loại ngay")
 
     if submitted:
-        # Chuẩn bị payload JSON gửi đi (Key phải khớp 100% với Pydantic BaseModel trong FastAPI)
+        # 1. Gom dữ liệu vào dictionary
         payload = {
             "Area": area,
             "Perimeter": perimeter,
@@ -86,29 +123,38 @@ with tab1:
             "Solidity": solidity,
             "Extent": extent,
             "Roundness": roundness,
-            "Aspect_Ration": aspect_ratio, # Khớp với Backend
+            "Aspect_Ration": aspect_ratio,
             "Compactness": compactness
         }
 
-        with st.spinner("Đang gửi dữ liệu tới AI..."):
-            try:
-                response = requests.post(API_URL_PREDICT, json=payload, timeout=10)
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    # Hiển thị kết quả đẹp
-                    st.success("✅ Dự đoán thành công!")
+        # 2. KIỂM TRA DỮ LIỆU (VALIDATION)
+        validation_errors = validate_data(payload)
+
+        if validation_errors:
+            # Nếu có lỗi, hiển thị cảnh báo và KHÔNG gửi request
+            st.error("⛔ Phát hiện dữ liệu không hợp lệ (Out of Schema):")
+            for err in validation_errors:
+                st.warning(err)
+            st.info("Vui lòng điều chỉnh lại các thông số trên để tiếp tục.")
+        else:
+            # 3. Nếu dữ liệu sạch, mới gửi Request
+            with st.spinner("Dữ liệu hợp lệ. Đang gửi tới AI..."):
+                try:
+                    response = requests.post(API_URL_PREDICT, json=payload, timeout=10)
                     
-                    col_res1, col_res2 = st.columns(2)
-                    with col_res1:
-                        st.metric(label="Loại hạt dự đoán", value=result.get("prediction", "Unknown"))
-                    with col_res2:
-                        st.metric(label="Độ tin cậy", value=result.get("confidence", "0%"))
+                    if response.status_code == 200:
+                        result = response.json()
+                        st.success("✅ Dự đoán thành công!")
                         
-                else:
-                    st.error(f"❌ Lỗi từ Server ({response.status_code}): {response.text}")
-            except Exception as e:
-                st.error(f"❌ Không kết nối được server: {e}")
+                        col_res1, col_res2 = st.columns(2)
+                        with col_res1:
+                            st.metric(label="Loại hạt dự đoán", value=result.get("prediction", "Unknown"))
+                        with col_res2:
+                            st.metric(label="Độ tin cậy", value=result.get("confidence", "0%"))
+                    else:
+                        st.error(f"❌ Lỗi từ Server ({response.status_code}): {response.text}")
+                except Exception as e:
+                    st.error(f"❌ Không kết nối được server: {e}")
 
 # ==========================================
 # TAB 2: DỰ ĐOÁN HÀNG LOẠT (Gửi tới /predict_file) - Code cũ của bạn
@@ -156,3 +202,4 @@ with tab2:
                         st.error(f"Không kết nối được server: {e}")
         except Exception as e:
             st.error(f"Lỗi đọc file: {e}")
+
